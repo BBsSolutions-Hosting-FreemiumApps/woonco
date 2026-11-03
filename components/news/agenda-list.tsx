@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { CalendarDays, ChevronRight, MapPin, Plus, Users } from 'lucide-react'
+import { CalendarDays, ChevronRight, MapPin, Plus, Users, Clock, ExternalLink } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 const events = [
   { day: '14', month: 'feb', date: '14 februari 2026', title: 'Open dag Ecodorp Zonnevallei', place: 'Zutphen', type: 'Open dag', color: 'bg-accent' },
@@ -19,6 +20,7 @@ const filters = ['Alles', 'Open dagen', 'Workshops', 'Ontmoeten']
 
 export function AgendaList() {
   const [activeFilter, setActiveFilter] = useState('Alles')
+  const [selectedEvent, setSelectedEvent] = useState<(typeof events)[number] | null>(null)
   const visibleEvents = useMemo(() => {
     if (activeFilter === 'Alles') return events
     if (activeFilter === 'Open dagen') return events.filter((event) => event.type === 'Open dag' || event.type === 'Rondleiding')
@@ -64,22 +66,57 @@ export function AgendaList() {
 
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {visibleEvents.map((event) => (
-            <li key={event.title} className="group flex gap-4 rounded-lg border bg-card p-4 transition-shadow hover:shadow-md">
-              <div className={`flex size-14 shrink-0 flex-col items-center justify-center rounded-md ${event.color}`}>
-                <span className="font-heading text-xl font-extrabold leading-none">{event.day}</span>
-                <span className="text-xs font-bold uppercase">{event.month}</span>
-              </div>
-              <div className="flex min-w-0 flex-col gap-1">
-                <Badge variant="outline" className="w-fit text-[10px]">{event.type}</Badge>
-                <h3 className="text-pretty text-sm font-bold leading-snug group-hover:text-primary">{event.title}</h3>
-                <div className="mt-auto flex flex-wrap gap-x-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1"><MapPin className="size-3" aria-hidden="true" />{event.place}</span>
-                  <span>{event.date}</span>
+            <li key={event.title}>
+              <button
+                type="button"
+                onClick={() => setSelectedEvent(event)}
+                className="group flex h-full w-full gap-4 rounded-lg border bg-card p-4 text-left transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <div className={`flex size-14 shrink-0 flex-col items-center justify-center rounded-md ${event.color}`}>
+                  <span className="font-heading text-xl font-extrabold leading-none">{event.day}</span>
+                  <span className="text-xs font-bold uppercase">{event.month}</span>
                 </div>
-              </div>
+                <div className="flex min-w-0 flex-col gap-1">
+                  <Badge variant="outline" className="w-fit text-[10px]">{event.type}</Badge>
+                  <h3 className="text-pretty text-sm font-bold leading-snug group-hover:text-primary">{event.title}</h3>
+                  <div className="mt-auto flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><MapPin className="size-3" aria-hidden="true" />{event.place}</span>
+                    <span>{event.date}</span>
+                  </div>
+                  <span className="mt-1 text-xs font-bold text-primary">Meer informatie</span>
+                </div>
+              </button>
             </li>
           ))}
         </ul>
+
+        <Dialog open={selectedEvent !== null} onOpenChange={(open) => !open && setSelectedEvent(null)}>
+          <DialogContent>
+            {selectedEvent && (
+              <>
+                <DialogHeader>
+                  <Badge className="w-fit">{selectedEvent.type}</Badge>
+                  <DialogTitle className="text-2xl">{selectedEvent.title}</DialogTitle>
+                  <DialogDescription>
+                    {selectedEvent.date} · {selectedEvent.place}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex flex-col gap-4 text-sm leading-relaxed">
+                  <p>
+                    Kom langs en ontmoet de bewoners achter dit initiatief. Tijdens deze activiteit krijg je een kijkje achter de schermen en is er alle ruimte om vragen te stellen.
+                  </p>
+                  <div className="grid gap-3 rounded-lg bg-secondary p-4 sm:grid-cols-2">
+                    <p className="flex items-center gap-2"><Clock className="size-4 text-primary" aria-hidden="true" /><span><strong>Datum:</strong> {selectedEvent.date}</span></p>
+                    <p className="flex items-center gap-2"><MapPin className="size-4 text-primary" aria-hidden="true" /><span><strong>Locatie:</strong> {selectedEvent.place}</span></p>
+                  </div>
+                  <Button render={<a href={`mailto:agenda@samenhuis.nl?subject=${encodeURIComponent(selectedEvent.title)}`} />} nativeButton={false}>
+                    Aanmelden of vragen stellen <ExternalLink data-icon="inline-end" />
+                  </Button>
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4">
           <p className="flex items-center gap-2 text-xs text-muted-foreground">
